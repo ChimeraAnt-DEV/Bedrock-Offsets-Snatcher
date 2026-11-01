@@ -40,6 +40,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -88,7 +89,7 @@ fun MainScreen(
         Spacer(Modifier.height(12.dp))
         LogoHeader()
         Spacer(Modifier.height(16.dp))
-        PickCard(onPick = { onPickApk() }, pickedName = null)
+        PickCard(onPick = onPickApk)
         Spacer(Modifier.height(16.dp))
         PipelineCard(state)
         Spacer(Modifier.height(16.dp))
@@ -149,7 +150,7 @@ private fun LogoHeader() {
 }
 
 @Composable
-private fun PickCard(onPick: () -> Unit, pickedName: String?) {
+private fun PickCard(onPick: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -278,6 +279,20 @@ private fun ResultCard(
     val clipboard = LocalClipboardManager.current
     val json = state.jsonOutput
     var showAll by remember { mutableStateOf(false) }
+    var includeVtables by remember { mutableStateOf(true) }
+    var onlyVerified by remember { mutableStateOf(true) }
+
+    fun filteredJson(): String? {
+        val base = json ?: return null
+        val result = de.lynxifyy.offsetsnatcher.processing.ExtractResult.fromJson(base)
+        val funcs = if (onlyVerified) result.functions.filter { it.verified } else result.functions
+        val vts = if (includeVtables) result.vtables else emptyList()
+        val filtered = result.copy(
+            functions = funcs,
+            vtables = vts,
+        )
+        return filtered.toJson()
+    }
 
     AnimatedVisibility(visible = json != null) {
         Card(
@@ -312,7 +327,7 @@ private fun ResultCard(
                         .background(MaterialTheme.colorScheme.background),
                 ) {
                     Text(
-                        text = previewJson(json ?: "", showAll),
+                        text = previewJson(filteredJson() ?: "", showAll),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier
@@ -326,13 +341,32 @@ private fun ResultCard(
                     Text(if (showAll) "Show less" else "Show full JSON")
                 }
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    PillToggle(
+                        label = "vtables",
+                        checked = includeVtables,
+                        onToggle = { includeVtables = !includeVtables },
+                    )
+                    PillToggle(
+                        label = "verified only",
+                        checked = onlyVerified,
+                        onToggle = { onlyVerified = !onlyVerified },
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Button(
                         onClick = {
-                            clipboard.setText(androidx.compose.ui.text.AnnotatedString(json ?: ""))
+                            clipboard.setText(
+                                androidx.compose.ui.text.AnnotatedString(filteredJson() ?: "")
+                            )
                             Toast.makeText(context, "JSON copied", Toast.LENGTH_SHORT).show()
                         },
                         shape = RoundedCornerShape(50),
@@ -346,7 +380,7 @@ private fun ResultCard(
                         Text("Copy")
                     }
                     Button(
-                        onClick = { json?.let(onExport) },
+                        onClick = { filteredJson()?.let(onExport) },
                         shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
@@ -364,6 +398,51 @@ private fun ResultCard(
                     Spacer(Modifier.size(4.dp))
                     Text("Start over")
                 }
+            }
+        }
+    }
+}
+
+/** A pill-shaped toggle switch (functional, filters the exported JSON). */
+@Composable
+private fun PillToggle(
+    label: String,
+    checked: Boolean,
+    onToggle: () -> Unit,
+) {
+    val bg = if (checked) MaterialTheme.colorScheme.primary
+    else MaterialTheme.colorScheme.surfaceVariant
+    val fg = if (checked) MaterialTheme.colorScheme.onPrimary
+    else MaterialTheme.colorScheme.onSurfaceVariant
+    Surface(
+        onClick = onToggle,
+        shape = RoundedCornerShape(50),
+        color = bg,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = fg,
+            )
+            Spacer(Modifier.size(6.dp))
+            Box(
+                modifier = Modifier
+                    .size(width = 26.dp, height = 16.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(if (checked) Color.White else MaterialTheme.colorScheme.outline),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .padding(2.dp)
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(if (checked) BerryOrange else MaterialTheme.colorScheme.onSurfaceVariant),
+                )
             }
         }
     }

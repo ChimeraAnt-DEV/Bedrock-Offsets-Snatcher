@@ -98,7 +98,7 @@ class ApkExtractor(private val context: Context) {
                     return ApkMeta(
                         packageName = "com.mojang.minecraftpe",
                         versionName = version.split(":").last().trim(),
-                        versionCode = version.codePointCount(0, version.length).toLong(),
+                        versionCode = 0, // not present in version.txt
                     )
                 }
             }
