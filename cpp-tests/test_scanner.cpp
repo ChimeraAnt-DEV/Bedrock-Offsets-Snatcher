@@ -138,3 +138,45 @@ TEST(scanner_fuzz_agrees_with_bruteforce) {
     }
     EXPECT_TRUE(true);
 }
+
+TEST(scanner_partial_matches_report_success) {
+    // A set where some patterns hit and some miss: run() must return true and
+    // report only the hits (no full aborts on a single stale pattern).
+    const uint8_t hay[] = {0xAA, 0xBB, 0x01, 0x02, 0x03, 0xCC};
+    std::vector<Signature> sigs = {
+        {"hit1", "text", "01 02 03"},
+        {"miss1", "text", "FE ED FA CE"},
+        {"hit2", "text", "AA BB"},
+    };
+    SignatureScanner sc(hay, sizeof(hay), 0x1000, 0);
+    std::vector<SignatureMatch> matches;
+    std::string err;
+    EXPECT_TRUE(sc.run(sigs, &matches, &err));
+    EXPECT_EQ(matches.size(), 2u);
+    EXPECT_EQ(matches[0].pattern_index, 0u);
+    EXPECT_EQ(matches[1].pattern_index, 2u);
+}
+
+TEST(scanner_all_miss_reports_failure) {
+    const uint8_t hay[] = {0x01, 0x02, 0x03};
+    std::vector<Signature> sigs = {
+        {"a", "text", "DE AD"}, {"b", "text", "BE EF"},
+    };
+    SignatureScanner sc(hay, sizeof(hay), 0, 0);
+    std::vector<SignatureMatch> matches;
+    std::string err;
+    EXPECT_FALSE(sc.run(sigs, &matches, &err));
+    EXPECT_TRUE(!err.empty());
+}
+
+TEST(scanner_vaddr_is_relative_to_base) {
+    const uint8_t hay[] = {0x10, 0x20, 0x30, 0x40};
+    std::vector<Signature> sigs = {{"t", "text", "30 40"}};
+    SignatureScanner sc(hay, sizeof(hay), 0x2000, 0x100);
+    std::vector<SignatureMatch> m;
+    EXPECT_TRUE(sc.run(sigs, &m, nullptr));
+    EXPECT_EQ(m.size(), 1u);
+    // vaddr = start_vaddr + offset - base = 0x2000 + 2 - 0x100 = 0x1F02.
+    EXPECT_EQ(m[0].vaddr, 0x1f02ULL);
+    EXPECT_EQ(m[0].file_offset, 2u);
+}

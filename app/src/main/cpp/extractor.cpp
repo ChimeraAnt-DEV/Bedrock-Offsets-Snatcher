@@ -92,8 +92,7 @@ ExtractResult extractOffsets(const uint8_t* data, size_t size,
             SignatureScanner sc(p, len, rodata->address,
                                parser.baseAddress());
             std::vector<SignatureMatch> m;
-            std::string err;
-            if (sc.run(rodata_sigs, &m, &err)) {
+            if (sc.run(rodata_sigs, &m, nullptr)) {
                 result.rodata_scanned = len;
                 for (const SignatureMatch& sm : m) {
                     const Signature& sig = rodata_sigs[sm.pattern_index];
@@ -105,6 +104,10 @@ ExtractResult extractOffsets(const uint8_t* data, size_t size,
                     fo.verified = true;
                     result.functions.push_back(fo);
                 }
+            } else {
+                // String signatures are best-effort (a missing string is not
+                // fatal if the code signatures still resolved).
+                result.rodata_scanned = len;
             }
         }
     }

@@ -141,23 +141,31 @@ bool SignatureScanner::run(const std::vector<Signature>& sigs,
                            std::vector<SignatureMatch>* matches,
                            std::string* error) {
     matches->clear();
+    size_t found = 0;
     for (size_t i = 0; i < sigs.size(); ++i) {
         const Signature& sig = sigs[i];
         if (sig.pattern.empty()) continue;  // e.g. pure-vtable entries
 
         size_t file_off = 0;
         size_t plen = 0;
-        if (!findFirst(h_, n_, sig.pattern, &file_off, &plen)) {
-            if (error) *error = "signature not found: " + sig.id;
-            return false;
-        }
+        if (!findFirst(h_, n_, sig.pattern, &file_off, &plen)) continue;
+
         SignatureMatch m{};
         m.pattern_index = i;
         m.file_offset = file_off;
         m.vaddr = start_vaddr_ + file_off - base_;
         matches->push_back(m);
+        ++found;
     }
-    return true;
+    if (error) {
+        // Report the number of misses without failing the whole scan.
+        if (found == 0) {
+            *error = "no signatures matched";
+        } else if (found < sigs.size()) {
+            *error = "";
+        }
+    }
+    return found > 0;
 }
 
 }  // namespace glowberry
