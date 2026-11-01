@@ -26,6 +26,9 @@ android {
             // Make the NDK expose libc++_shared.so packaged with the APK.
             stl = "c++_shared"
         }
+        // Pin the NDK used for reproducible builds. AGP auto-installs this
+        // version when licenses are accepted (see .github/workflows/build.yml).
+        ndkVersion = "27.2.12479018"
         externalNativeBuild {
             cmake {
                 cppFlags += listOf("-std=c++17", "-fvisibility=hidden", "-fno-rtti")
