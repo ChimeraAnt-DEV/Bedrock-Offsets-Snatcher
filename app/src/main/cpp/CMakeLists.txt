@@ -11,6 +11,7 @@ add_library(glowberry_extractor SHARED
     scanner.cpp
     signatures.cpp
     extractor.cpp
+    json_gen.cpp
     jni_bridge.cpp
 )
 

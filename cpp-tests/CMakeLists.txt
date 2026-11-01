@@ -9,10 +9,12 @@ add_executable(glowberry_tests
     ../app/src/main/cpp/scanner.cpp
     ../app/src/main/cpp/signatures.cpp
     ../app/src/main/cpp/extractor.cpp
+    ../app/src/main/cpp/json_gen.cpp
     test_main.cpp
     test_elf_parser.cpp
     test_scanner.cpp
     test_extractor.cpp
+    test_json.cpp
 )
 target_include_directories(glowberry_tests PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}"
