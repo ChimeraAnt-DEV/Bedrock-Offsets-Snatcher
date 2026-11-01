@@ -24,18 +24,6 @@ target_link_libraries(glowberry_extractor PRIVATE log android)
 # ------------------------------------------------------------- host tests ---
 # The extraction engine is architecture independent; compile the same sources
 # into a native test binary (built for the host when running without the
-# Android toolchain).
-add_executable(glowberry_tests
-    elf_parser.cpp
-    scanner.cpp
-    signatures.cpp
-    extractor.cpp
-    tests/test_elf_parser.cpp
-    tests/test_scanner.cpp
-    tests/test_extractor.cpp
-)
-target_include_directories(glowberry_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_compile_options(glowberry_tests PRIVATE -Wall -Wextra)
-
-enable_testing()
-add_test(NAME glowberry_tests COMMAND glowberry_tests)
+# Android toolchain). The tests live in cpp-tests/ at the repo root and are
+# driven by cpp-tests/CMakeLists.txt, which is intentionally NOT part of the
+# Android build (no AndroidManifest/JNI needed).

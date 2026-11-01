@@ -33,14 +33,6 @@
 
 namespace glowberry {
 
-// Fixed-point-style u64 -> hex string (no overflow for u64 values).
-static std::string hex64(uint64_t v) {
-    char buf[32];
-    std::snprintf(buf, sizeof(buf), "0x%llx",
-                  static_cast<unsigned long long>(v));
-    return buf;
-}
-
 static void jsonEscape(std::string* out, const std::string& in) {
     for (unsigned char c : in) {
         switch (c) {

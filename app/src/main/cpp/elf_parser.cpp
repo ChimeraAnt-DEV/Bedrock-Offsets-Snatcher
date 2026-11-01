@@ -50,9 +50,8 @@ constexpr size_t kSymShndx = 6;
 constexpr size_t kSymValue = 8;
 constexpr size_t kSymSize = 16;
 
-constexpr uint32_t kShtStrtab = 3;
 constexpr uint32_t kShtDynsym = 11;
-constexpr uint64_t kShfAlloc = 2;  // SHF_ALLOC
+
 
 inline uint16_t load16(const uint8_t* p) {
     return static_cast<uint16_t>(p[0] | (p[1] << 8));
