@@ -51,6 +51,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // No release keystore is stored in the repo. Sign the release
+            // APK with the local debug keystore so CI can publish an
+            // installable artifact (see .github/workflows/build.yml).
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
